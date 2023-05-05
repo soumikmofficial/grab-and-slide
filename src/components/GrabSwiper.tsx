@@ -7,18 +7,56 @@ const INITIAL_CURSOR_STATE = {
   scrollLeft: 0,
 };
 
+export class SwiperVariables {
+  public static isDragging = false;
+}
+
 const GrabSwiper = () => {
   const swiperContainerRef = React.useRef<HTMLDivElement>(null);
   const [cursorState, setCursorState] = useState(INITIAL_CURSOR_STATE);
-  const { classes } = useStyles({ isGrabbing: cursorState.isDown });
+  const [isDrag, setIsDrag] = useState(false);
+  const { classes } = useStyles({
+    isGrabbing: cursorState.isDown,
+    isDragging: isDrag,
+  });
+
+  const swipeRight = () => {
+    const moveTo = cursorState.scrollLeft + 150;
+    swiperContainerRef?.current?.scrollTo({
+      left: moveTo,
+      behavior: "smooth",
+    });
+    setCursorState((prev) => ({
+      ...prev,
+      scrollLeft: moveTo,
+    }));
+  };
+  const swipeLeft = () => {
+    if (cursorState.scrollLeft === 0) return;
+    let moveTo = cursorState.scrollLeft - 150;
+    if (moveTo < 0) {
+      moveTo = 0;
+    }
+
+    swiperContainerRef?.current?.scrollTo({
+      left: moveTo,
+      behavior: "smooth",
+    });
+    setCursorState((prev) => ({
+      ...prev,
+      scrollLeft: moveTo,
+    }));
+  };
 
   const handleMouseUp = () => {
     setCursorState((prev) => ({ ...prev, isDown: false }));
-    console.log("up");
+    SwiperVariables.isDragging = false;
+    setIsDrag(false);
   };
 
   const handleMouseLeave = () => {
     setCursorState((prev) => ({ ...prev, isDown: false }));
+    setIsDrag(false);
   };
 
   //   todo: mousedown
@@ -55,13 +93,17 @@ const GrabSwiper = () => {
   }, []);
 
   //   todo: mouse move
+
   useEffect(() => {
     const swiper = swiperContainerRef.current;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!cursorState.isDown) return;
+      // SwiperVariables.isDragging = true;
+
       e.preventDefault();
       const walk = e.offsetX - cursorState.startX;
+      // !isDrag && setIsDrag(true);
       swiperContainerRef.current?.scrollTo({
         left: cursorState.scrollLeft - walk,
       });
@@ -71,13 +113,29 @@ const GrabSwiper = () => {
     return () => swiper?.removeEventListener("mousemove", handleMouseMove);
   }, [cursorState.isDown, cursorState.startX]);
 
+  useEffect(() => {
+    console.log(isDrag);
+  }, [isDrag]);
+
   return (
-    <div className={classes.swiperContainer} ref={swiperContainerRef}>
-      <div className={classes.slide}>abcde</div>
-      <div className={classes.slide}>kdjfkdjkfjjjj</div>
-      <div className={classes.slide}>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
-      <div className={classes.slide}>sdjkkkkkkkkkkkkkkkkk</div>
-      <div className={classes.slide}>aa</div>
+    <div className={classes.wrapper}>
+      <div className={classes.arrow} onClick={swipeLeft}>
+        {" "}
+        {"<"}
+      </div>
+      <div className={classes.swiperContainer} ref={swiperContainerRef}>
+        <div className={classes.slide} onClick={() => console.log("clicked")}>
+          abcde
+        </div>
+        <div className={classes.slide}>kdjfkdjkfjjjj</div>
+        <div className={classes.slide}>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
+        <div className={classes.slide}>sdjkkkkkkkkkkkkkkkkk</div>
+        <div className={classes.slide}>aa</div>
+      </div>
+      <div className={classes.arrow} onClick={swipeRight}>
+        {" "}
+        {">"}
+      </div>
     </div>
   );
 };
